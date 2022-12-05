@@ -21,9 +21,6 @@ options.add_argument('--disable-software-rasterizer')
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-def sortPrinterStates():
-    unsortedList = printerStates.items()
-
 def parsePrinterStates():
     free = []
     occupied = []
@@ -31,22 +28,29 @@ def parsePrinterStates():
 
     for printer in printerStates:
         if(printerStates[printer]["status"] == "Operational"):
-            free.append({printer: printerStates[printer]})
+            free.append(printer)
         elif("Printing" in printerStates[printer]["status"]):
-            occupied.append({printer: printerStates[printer]})
+            occupied.append({"printer": printer, "time": printerStates[printer]["time-remaining"]})
         else:
             offline.append({printer: printerStates[printer]})
     
-    #occupied.sort(key="time-remaining")
+    # Sorts the dictionary in order of least time remaining
+    occupied = sorted(occupied, key=lambda d: d["time"])
+
 
     print("FREE PRINTERS")  
     for printer in free:
-        print("{}".format(list(printer.keys())[0].upper()))
+        print("{}".format(printer.upper()))
     print("\n")
     
     print("PRINTERS IN USE")
     for printer in occupied:
-        print("{0}: {1} remaining.".format(list(printer.keys())[0].upper(), printer[list(printer.keys())[0]]["time-remaining"]))
+        remainingTime = printer["time"] + " remaining."
+
+        if (remainingTime == " - "):
+            remainingTime = "RECENTLY STARTED"
+
+        print("{0}: {1}".format(printer["printer"].upper(), remainingTime))
     print("\n")
     
     print("OFFLINE PRINTERS")
@@ -54,6 +58,7 @@ def parsePrinterStates():
         print("{0}: {1}".format(list(printer.keys())[0].upper(), printer[list(printer.keys())[0]]["status"].upper()))
     print("\n")
 
+# Gets data for each printer from their individual NOLOP site
 for i in range(1, 13):
     currentPrinter = "p" + str(i)
 
@@ -87,7 +92,7 @@ for i in range(1, 13):
     printerStatus = wait.text
 
     printTimeRemaining = driver.find_element(By.XPATH, '//*[@id="state"]/div/strong[9]').get_attribute('title')
-    print(printTimeRemaining)
+    #print(printTimeRemaining)
     
     if(printTimeRemaining == ''):
         try:
@@ -97,7 +102,6 @@ for i in range(1, 13):
 
     printerStates[currentPrinter] = {"status": printerStatus, "time-remaining": printTimeRemaining}
 
-print(printerStates)
 parsePrinterStates()
 
 driver.quit()
