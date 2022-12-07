@@ -5,12 +5,15 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 USERNAME = "nolop"
 PASSWORD = "3dprint"
+
+TWILIO_TOKEN = ""
+TWILIO_SID = ""
+
 
 printerStates = {}
 DRIVER_PATH = r'C:\Users\legok\chromedriver_win32\chromedriver.exe'
@@ -67,7 +70,11 @@ for i in range(1, 13):
     else:
         printerSite = "https://10.245.72.231/"
 
-    driver.get(printerSite)
+    try:
+        driver.get(printerSite)
+    except:
+        printerStates[currentPrinter] = {"status":"ERROR GETTING WEBPAGE", "time":""}
+        continue
 
     # Login Step
     usernameInputBar = driver.find_element(By.XPATH, '//*[@id="login-user"]')
